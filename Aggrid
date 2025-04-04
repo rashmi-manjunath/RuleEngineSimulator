@@ -1,0 +1,63 @@
+import React, { useState, useRef, useCallback } from "react";
+import { AgGridReact } from "ag-grid-react";
+import "ag-grid-community/styles/ag-grid.css";
+import "ag-grid-community/styles/ag-theme-alpine.css";
+
+const AgGridCopyPasteRows = () => {
+  const gridRef = useRef(null);
+  const [rowData, setRowData] = useState([
+    { id: 1, name: "John Doe", age: 25 },
+    { id: 2, name: "Jane Smith", age: 30 },
+    { id: 3, name: "Michael Johnson", age: 35 },
+  ]);
+
+  const [columnDefs] = useState([
+    { field: "id", headerName: "ID", editable: true },
+    { field: "name", headerName: "Name", editable: true },
+    { field: "age", headerName: "Age", editable: true },
+  ]);
+
+  // Function to copy selected rows
+  const handleCopyRows = useCallback(() => {
+    const selectedNodes = gridRef.current.api.getSelectedNodes();
+    const selectedData = selectedNodes.map(node => node.data);
+    navigator.clipboard.writeText(JSON.stringify(selectedData));
+    alert("Rows copied!");
+  }, []);
+
+  // Function to paste rows
+  const handlePasteRows = useCallback(async () => {
+    try {
+      const clipboardText = await navigator.clipboard.readText();
+      const pastedRows = JSON.parse(clipboardText);
+      if (Array.isArray(pastedRows)) {
+        setRowData(prevData => [...prevData, ...pastedRows]);
+      }
+    } catch (error) {
+      console.error("Invalid data format:", error);
+    }
+  }, []);
+
+  return (
+    <div>
+      <button onClick={handleCopyRows} style={{ marginBottom: 10 }}>
+        Copy Selected Rows
+      </button>
+      <button onClick={handlePasteRows} style={{ marginBottom: 10, marginLeft: 10 }}>
+        Paste Rows
+      </button>
+
+      <div className="ag-theme-alpine" style={{ height: 400, width: "100%" }}>
+        <AgGridReact
+          ref={gridRef}
+          rowData={rowData}
+          columnDefs={columnDefs}
+          rowSelection="multiple"
+          defaultColDef={{ resizable: true, sortable: true, filter: true }}
+        />
+      </div>
+    </div>
+  );
+};
+
+export default AgGridCopyPasteRows;
